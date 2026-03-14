@@ -6,7 +6,7 @@ A template to create a monorepo SST v3 project. [Learn more](https://sst.dev/doc
 
 1. Use this template to [create your own repo](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
 
-2. Clone the new repo..
+2. Clone the new repo.
 
    ```bash
    git clone <REPO_URL> MY_APP
