@@ -33,7 +33,7 @@ function MapLoader() {
   )
 }
 
-type SelectedDrain = { name: string; id: string; online: boolean }
+type SelectedDrain = { name: string; id: string }
 
 function DrainMap() {
   const [theme, setTheme] = useState<"light" | "dark">("dark")
@@ -72,8 +72,7 @@ function DrainMap() {
               name={drain.publicName}
               latitude={drain.latitude}
               longitude={drain.longitude}
-              online={drain.online}
-              onClick={(d) => setSelectedDrain({ ...d, online: drain.online })}
+              onClick={(d) => setSelectedDrain(d)}
             />
           ))}
           <MapControls showCompass />
@@ -84,7 +83,6 @@ function DrainMap() {
         onClose={() => setSelectedDrain(null)}
         drainName={selectedDrain?.name ?? ""}
         drainId={selectedDrain?.id}
-        online={selectedDrain?.online ?? false}
       />
     </div>
   )

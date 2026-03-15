@@ -6,11 +6,13 @@ type DrainMarkerProps = {
   readonly name: string
   readonly latitude: number
   readonly longitude: number
-  readonly online: boolean
   readonly onClick: (drain: { id: string; name: string }) => void
 }
 
-export function DrainMarker({ id, name, latitude, longitude, online, onClick }: DrainMarkerProps) {
+export function DrainMarker({ id, name, latitude, longitude, onClick }: DrainMarkerProps) {
+  // TODO: replace with websocket status
+  const online = false
+
   return (
     <MapMarker longitude={longitude} latitude={latitude} onClick={() => onClick({ id, name })}>
       <MarkerContent>

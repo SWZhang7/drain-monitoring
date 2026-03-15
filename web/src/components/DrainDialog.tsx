@@ -137,10 +137,9 @@ type DrainDialogProps = {
   onClose: () => void
   drainName: string
   drainId?: string
-  online: boolean
 }
 
-function StatusBadge({ online }: { online: boolean }) {
+function StatusBadge({ online }: { readonly online: boolean }) {
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold font-mono tracking-wide ${online ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
       <span className={`size-1.5 rounded-full ${online ? "bg-green-500" : "bg-red-500"}`} />
@@ -149,7 +148,9 @@ function StatusBadge({ online }: { online: boolean }) {
   )
 }
 
-export function DrainDialog({ open, onClose, drainName, drainId, online }: DrainDialogProps) {
+export function DrainDialog({ open, onClose, drainName, drainId }: DrainDialogProps) {
+  // TODO: replace with websocket status
+  const online = false
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md pt-10 [&>button]:text-red-500 [&>button]:hover:text-red-700 [&>button]:cursor-pointer">

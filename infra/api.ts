@@ -1,4 +1,5 @@
 import { drainsTable, drainMessagesTable } from "./storage"
+import { userPool, userPoolClient } from "./cognito"
 
 const dbPermissions = [{ actions: ["dynamodb:*"], resources: ["*"] }]
 const comprehendPermissions = [{ actions: ["comprehend:DetectSentiment"], resources: ["*"] }]
@@ -6,7 +7,21 @@ const sesPermissions = [{ actions: ["ses:SendEmail"], resources: ["*"] }]
 
 export const sesFromEmail = new sst.Secret("SesFromEmail")
 
-export const api = new sst.aws.ApiGatewayV2("MyApi", { cors: true })
+export const api = new sst.aws.ApiGatewayV2("MyApi", {
+  cors: {
+    allowOrigins: $app.stage === "production" ? ["https://your-app.netlify.app"] : ["*"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  },
+})
+
+const cognitoAuthorizer = api.addAuthorizer({
+  name: "CognitoAuthorizer",
+  jwt: {
+    issuer: $interpolate`https://cognito-idp.us-east-1.amazonaws.com/${userPool.id}`,
+    audiences: [userPoolClient.id],
+  },
+})
 
 // Drains
 api.route("GET /drains", {
@@ -20,6 +35,17 @@ api.route("GET /drains/{id}", {
   link: [drainsTable],
   permissions: dbPermissions,
 })
+
+// Admin — protected
+api.route(
+  "GET /admin/drains",
+  {
+    handler: "packages/functions/src/drains.listPrivate",
+    link: [drainsTable],
+    permissions: dbPermissions,
+  },
+  { auth: { jwt: { authorizer: cognitoAuthorizer.id } } },
+)
 
 // Reports
 api.route("POST /reports", {

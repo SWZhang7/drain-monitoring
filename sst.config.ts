@@ -14,10 +14,10 @@ export default $config({
     const database = await import("./infra/database");
     const cognito = await import("./infra/cognito");
     const messaging = await import("./infra/messaging");
-    await import("./infra/api");
-    await import("./infra/AdminSeed");
+    const { api } = await import("./infra/api");
 
     return {
+      ApiUrl: api.url,
       HeartbeatTable: database.heartbeatTable.name,
       SensorDataTable: database.sensorDataTable.name,
       UserPoolId: cognito.userPool.id,

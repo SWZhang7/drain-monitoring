@@ -4,9 +4,25 @@ export const userPool = new sst.aws.CognitoUserPool("DrainMonitoringPool", {
   usernames: ["email"],
 });
 
-export const userPoolClient = userPool.addClient("DrainMonitoringWebClient");
+// Use raw Pulumi to set explicit auth flows — SST's addClient() doesn't expose this
+export const userPoolClient = new aws.cognito.UserPoolClient("DrainMonitoringWebClient", {
+  userPoolId: userPool.id,
+  name: "DrainMonitoringWebClient",
+  explicitAuthFlows: [
+    "ALLOW_USER_PASSWORD_AUTH",
+    "ALLOW_REFRESH_TOKEN_AUTH",
+    "ALLOW_USER_SRP_AUTH",
+  ],
+  preventUserExistenceErrors: "ENABLED",
+});
 
-// Use Pulumi AWS directly since SST v3 doesn't have CognitoUserPoolGroup
+export const adminsGroup = new aws.cognito.UserGroup("AdminsGroup", {
+  userPoolId: userPool.id,
+  name: "Admins",
+  description: "Full admin access",
+  precedence: 0,
+});
+
 export const operatorsGroup = new aws.cognito.UserGroup("OperatorsGroup", {
   userPoolId: userPool.id,
   name: "Operators",

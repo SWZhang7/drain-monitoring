@@ -1,10 +1,9 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb"
-import { Resource } from "sst"
-import { randomUUID } from "crypto"
+import { randomUUID } from "node:crypto"
 
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({ region: "us-east-1" }))
-const TABLE = Resource.Drains.name
+const TABLE = "drain-monitoring-dev-DrainsTable-bcmtdxbv"
 
 const drains = [
   { publicName: "Maxfield Avenue Storm Drain", privateName: "KGN-MAX-001", latitude: 17.9987, longitude: -76.7891, operatorEmail: "operator@floodwatch.com", height: 120 },

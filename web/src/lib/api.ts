@@ -1,15 +1,11 @@
 const API = import.meta.env.VITE_API_URL ?? ""
 
-export type DrainStatus = "normal" | "elevated" | "critical"
-
 export type Drain = {
   D_Id: string
   publicName: string
   latitude: number
   longitude: number
-  online: boolean
-  fillPercent: number | null
-  drainStatus: DrainStatus
+  height: number
 }
 
 export async function fetchDrains(): Promise<Drain[]> {
@@ -25,6 +21,29 @@ export async function submitReport(data: { D_Id: string; description: string; na
     body: JSON.stringify(data),
   })
   if (!res.ok) throw new Error("Failed to submit report")
+  return res.json()
+}
+
+export type DrainPrivate = {
+  D_Id: string
+  publicName: string
+  privateName: string | null
+  latitude: number
+  longitude: number
+  height: number
+  operatorEmail: string | null
+  sentimentScore: number | null
+  reportCount: number
+  lastSeen: number | null
+  alertSince: number | null
+  alreadyAlerted: boolean
+}
+
+export async function fetchAdminDrains(token: string): Promise<DrainPrivate[]> {
+  const res = await fetch(`${API}/admin/drains`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error("Failed to fetch admin drains")
   return res.json()
 }
 

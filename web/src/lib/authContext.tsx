@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react"
-import { getToken, signOut as cognitoSignOut } from "./auth"
+import { getToken, signOut as cognitoSignOut, clearStaleSession } from "./auth"
 
 type AuthCtx = {
   token: string | null
@@ -12,7 +12,7 @@ const AuthContext = createContext<AuthCtx>({ token: null, logout: () => {}, refr
 export function AuthProvider({ children }: { readonly children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
 
-  const refresh = () => { getToken().then(setToken) }
+  const refresh = () => { clearStaleSession(); getToken().then(setToken) }
 
   useEffect(() => { refresh() }, [])
 

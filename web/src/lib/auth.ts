@@ -36,12 +36,32 @@ export function signOut() {
   getPool().getCurrentUser()?.signOut()
 }
 
+export function clearStaleSession() {
+  // Remove all localStorage keys for this Cognito pool so stale tokens
+  // from a previous deploy (different client ID) never cause 400 storms.
+  const prefix = `CognitoIdentityServiceProvider.${import.meta.env.VITE_USER_POOL_CLIENT_ID ?? ""}`
+  Object.keys(localStorage)
+    .filter((k) => k.startsWith("CognitoIdentityServiceProvider.") && !k.startsWith(prefix))
+    .forEach((k) => localStorage.removeItem(k))
+}
+
 export function getToken(): Promise<string | null> {
   return new Promise((resolve) => {
-    const user = getPool().getCurrentUser()
+    const pool = getPool()
+    const user = pool.getCurrentUser()
     if (!user) return resolve(null)
+
+    // Guard: if no refresh token stored for this client, bail immediately.
+    // Calling getSession without one causes the SDK to hammer Cognito with retries.
+    const storageKey = `CognitoIdentityServiceProvider.${pool.getClientId()}.${user.getUsername()}.refreshToken`
+    if (!localStorage.getItem(storageKey)) return resolve(null)
+
     user.getSession((err: Error | null, session: { isValid: () => boolean; getIdToken: () => { getJwtToken: () => string } } | null) => {
-      resolve(err || !session?.isValid() ? null : session.getIdToken().getJwtToken())
+      if (err || !session?.isValid()) {
+        user.signOut()
+        return resolve(null)
+      }
+      resolve(session.getIdToken().getJwtToken())
     })
   })
 }

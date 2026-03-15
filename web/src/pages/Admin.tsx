@@ -2,12 +2,17 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { useQuery } from "@tanstack/react-query"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Eye, EyeOff } from "lucide-react"
+import { Card } from "@/components/ui/card"
+import { Eye, EyeOff, Loader2, Flag, Moon, Sun } from "lucide-react"
+import { Map, MapControls, useMap } from "@/components/ui/map"
+import { DrainMarker } from "@/components/DrainMarker"
 import { signIn, completeNewPassword } from "@/lib/auth"
 import { useAuth } from "@/lib/authContext"
+import { fetchAdminDrains, type DrainPrivate } from "@/lib/api"
 import type { CognitoUser } from "amazon-cognito-identity-js"
 
 const loginSchema = z.object({
@@ -140,7 +145,42 @@ function LoginWall() {
   )
 }
 
+const JAMAICA = { center: [-77.3, 18.15] as [number, number], zoom: 8.6 }
+
+function CenterJamaica() {
+  const { map } = useMap()
+  return (
+    <button
+      onClick={() => map?.flyTo({ center: JAMAICA.center, zoom: JAMAICA.zoom, duration: 1000 })}
+      aria-label="Center on Jamaica"
+      className="absolute top-2 left-2 z-10 flex items-center justify-center size-8 rounded-md border border-white/20 bg-[#1a1a1a] text-white shadow-sm hover:bg-accent hover:text-text hover:border-transparent transition-colors"
+    >
+      <Flag className="size-4" />
+    </button>
+  )
+}
+
+function MapLoader() {
+  const { isLoaded } = useMap()
+  if (isLoaded) return null
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+      <Loader2 className="size-6 animate-spin text-text/60" />
+    </div>
+  )
+}
+
 function AdminDashboard() {
+  const { token } = useAuth()
+  const [theme, setTheme] = useState<"light" | "dark">("dark")
+  const [selectedDrain, setSelectedDrain] = useState<DrainPrivate | null>(null)
+
+  const { data: drains = [] } = useQuery({
+    queryKey: ["admin-drains"],
+    queryFn: () => fetchAdminDrains(token!),
+    enabled: !!token,
+  })
+
   return (
     <div className="w-full p-7">
       <div className="flex items-center justify-between mb-6">
@@ -148,9 +188,64 @@ function AdminDashboard() {
           <h1 className="text-5xl font-bold tracking-tighter">Admin</h1>
           <p className="text-text/60 mt-1">Manage drains and monitor activity.</p>
         </div>
+        <Button
+          size="icon"
+          variant="outline"
+          className="rounded-full hover:cursor-pointer"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          aria-label="Toggle map theme"
+        >
+          {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+        </Button>
       </div>
-      {/* Dashboard content goes here */}
-      <p className="text-text/60 text-sm">Dashboard coming soon.</p>
+
+      <Card className="relative w-full h-[600px] p-0 overflow-hidden">
+        <Map theme={theme} center={JAMAICA.center} zoom={JAMAICA.zoom}>
+          <MapLoader />
+          <CenterJamaica />
+          {drains.map((drain) => (
+            <DrainMarker
+              key={drain.D_Id}
+              id={drain.D_Id}
+              name={drain.publicName}
+              latitude={drain.latitude}
+              longitude={drain.longitude}
+              onClick={() => setSelectedDrain(drain)}
+            />
+          ))}
+          <MapControls showCompass />
+        </Map>
+
+        {/* Slide-in sidebar overlay */}
+        <div
+          className={`absolute top-0 right-0 h-full w-72 bg-background/95 backdrop-blur-sm border-l border-border shadow-xl flex flex-col p-5 overflow-y-auto transition-transform duration-300 ease-in-out z-20 ${
+            selectedDrain ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          {selectedDrain && (
+            <>
+              <div className="flex items-start justify-between mb-1">
+                <h2 className="text-base font-bold leading-tight">{selectedDrain.publicName}</h2>
+                <button
+                  onClick={() => setSelectedDrain(null)}
+                  className="text-text/40 hover:text-text transition-colors ml-2 shrink-0 text-lg leading-none"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-xs text-text/50 font-mono mb-4">{selectedDrain.privateName ?? "—"}</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <span className="text-text/60">Operator</span><span className="truncate">{selectedDrain.operatorEmail ?? "—"}</span>
+                <span className="text-text/60">Height</span><span>{selectedDrain.height}cm</span>
+                <span className="text-text/60">Sentiment</span><span>{selectedDrain.sentimentScore ?? "—"} / 10</span>
+                <span className="text-text/60">Reports</span><span>{selectedDrain.reportCount}</span>
+                <span className="text-text/60">Alerted</span><span>{selectedDrain.alreadyAlerted ? "Yes" : "No"}</span>
+              </div>
+            </>
+          )}
+        </div>
+      </Card>
     </div>
   )
 }
