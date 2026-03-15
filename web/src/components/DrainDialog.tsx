@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 
+const API = import.meta.env.VITE_API_URL ?? ""
+
 const reportSchema = z.object({
   name: z.string().optional(),
   description: z.string().min(10, "Please describe the problem in more detail"),
@@ -24,18 +26,17 @@ const volunteerSchema = z.object({
 type ReportForm = z.infer<typeof reportSchema>
 type VolunteerForm = z.infer<typeof volunteerSchema>
 
-function ReportForm() {
+function ReportForm({ drainId }: { drainId: string }) {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ReportForm>({
     resolver: zodResolver(reportSchema),
   })
 
   const mutation = useMutation({
     mutationFn: async (data: ReportForm) => {
-      // replace with your actual API call
-      const res = await fetch("/api/reports", {
+      const res = await fetch(`${API}/reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, D_Id: drainId }),
       })
       if (!res.ok) throw new Error("Failed to submit report")
       return res.json()
@@ -79,17 +80,17 @@ function ReportForm() {
   )
 }
 
-function VolunteerForm() {
+function VolunteerForm({ drainId }: { drainId: string }) {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<VolunteerForm>({
     resolver: zodResolver(volunteerSchema),
   })
 
   const mutation = useMutation({
     mutationFn: async (data: VolunteerForm) => {
-      const res = await fetch("/api/volunteers", {
+      const res = await fetch(`${API}/volunteers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, D_Id: drainId }),
       })
       if (!res.ok) throw new Error("Failed to sign up")
       return res.json()
@@ -176,11 +177,11 @@ export function DrainDialog({ open, onClose, drainName, drainId }: DrainDialogPr
           </TabsList>
           <TabsContent value="report">
             <p className="text-sm text-muted-foreground mt-3 mb-1">Spotted an issue? Let your local councillor know directly.</p>
-            <ReportForm />
+            <ReportForm drainId={drainId ?? ""} />
           </TabsContent>
           <TabsContent value="volunteer">
             <p className="text-sm text-muted-foreground mt-3 mb-1">Want to help fix it? Sign up and we'll connect you with the right person.</p>
-            <VolunteerForm />
+            <VolunteerForm drainId={drainId ?? ""} />
           </TabsContent>
         </Tabs>
       </DialogContent>

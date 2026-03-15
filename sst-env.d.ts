@@ -6,6 +6,22 @@
 
 declare module "sst" {
   export interface Resource {
+    "DrainMessages": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "Drains": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "MyApi": {
+      "type": "sst.aws.ApiGatewayV2"
+      "url": string
+    }
+    "SesFromEmail": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />

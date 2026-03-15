@@ -7,6 +7,10 @@
     "sst": "*"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8"
+    "@types/aws-lambda": "^8",
+    "@aws-sdk/client-dynamodb": "^3",
+    "@aws-sdk/lib-dynamodb": "^3",
+    "@aws-sdk/client-comprehend": "^3",
+    "@aws-sdk/client-ses": "^3"
   }
 }

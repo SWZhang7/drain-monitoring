@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "sst dev --stage dev",
     "build": "sst build",
-    "deploy": "sst deploy --stage staging",
+    "deploy": "sst deploy --stage dev",
     "remove": "sst remove --stage dev",
     "typecheck": "tsc --noEmit"
   },
