@@ -21,16 +21,18 @@ function sentimentToScore(scores: Record<string, number>): number {
 export const create: Handler = async (event) => {
   try {
     const body = JSON.parse(event.body || "{}")
-    const { D_Id, message, name } = body
+    const { D_Id, description, name: rawName } = body
+    const name = rawName || "Anonymous"
 
-    if (!D_Id || !message) {
-      return jsonResponse(400, { error: "D_Id and message are required" })
+    if (!D_Id || !description) {
+      return jsonResponse(400, { error: "D_Id and description are required" })
     }
+    
 
     const now = new Date().toISOString()
 
     const sentimentResult = await comprehend.send(
-      new DetectSentimentCommand({ LanguageCode: "en", Text: message })
+      new DetectSentimentCommand({ LanguageCode: "en", Text: description })
     )
 
     const sentiment = sentimentResult.Sentiment ?? "NEUTRAL"
@@ -39,7 +41,9 @@ export const create: Handler = async (event) => {
 
     const item = {
       D_Id,
-      message,
+      Event_Key: `REPORT#${now}`,
+      eventType: "REPORT",
+      message: description,
       name: name || null,
       createdAt: now,
       sentiment,

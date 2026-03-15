@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { MapMarker, MarkerContent } from "@/components/ui/map"
-import { Droplets } from "lucide-react"
+import { Droplets, Circle, XCircle } from "lucide-react"
 
 type DrainStatusValue = "online" | "offline"
 
@@ -13,9 +13,9 @@ function DrainStatus({ drainId }: { drainId: string }) {
     return () => ws.close()
   }, [drainId])
 
-  return (
-    <span className={`absolute -top-1 -right-1 size-3 rounded-full border-2 border-white ${status === "online" ? "bg-green-500" : "bg-red-500"}`} />
-  )
+  return status === "online"
+    ? <Circle className="absolute -top-1 -right-1 size-3.5 fill-green-500 text-green-500" />
+    : <XCircle className="absolute -top-1 -right-1 size-3.5 fill-red-500 text-white" />
 }
 
 type DrainMarkerProps = {

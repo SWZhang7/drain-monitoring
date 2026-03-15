@@ -14,7 +14,7 @@ const API = import.meta.env.VITE_API_URL ?? ""
 
 const reportSchema = z.object({
   name: z.string().optional(),
-  description: z.string().min(10, "Please describe the problem in more detail"),
+  description: z.string().min(10, "Please describe the drain in more detail"),
 })
 
 const volunteerSchema = z.object({
@@ -59,10 +59,10 @@ function ReportForm({ drainId }: { drainId: string }) {
         {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="r-desc">Problem Description</Label>
+        <Label htmlFor="r-desc">Description</Label>
         <textarea
           id="r-desc"
-          placeholder="Describe the issue"
+          placeholder="Describe the drain"
           rows={4}
           {...register("description")}
           className="border-input bg-background placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 flex w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] resize-none"
@@ -74,7 +74,7 @@ function ReportForm({ drainId }: { drainId: string }) {
         disabled={mutation.isPending}
         className="rounded-full bg-text text-white hover:bg-alt-accent transition-colors cursor-pointer"
       >
-        Submit Report
+        Submit
       </Button>
     </form>
   )
@@ -172,11 +172,11 @@ export function DrainDialog({ open, onClose, drainName, drainId }: DrainDialogPr
         </DialogHeader>
         <Tabs defaultValue="report" className="w-full flex flex-col">
           <TabsList className="w-full!">
-            <TabsTrigger value="report" className="flex-1 cursor-pointer">Report Problem</TabsTrigger>
+            <TabsTrigger value="report" className="flex-1 cursor-pointer">Update Status</TabsTrigger>
             <TabsTrigger value="volunteer" className="flex-1 cursor-pointer">Volunteer</TabsTrigger>
           </TabsList>
           <TabsContent value="report">
-            <p className="text-sm text-muted-foreground mt-3 mb-1">Spotted an issue? Let your local councillor know directly.</p>
+            <p className="text-sm text-muted-foreground mt-3 mb-1">See a drain? Add information for your local councillor.</p>
             <ReportForm drainId={drainId ?? ""} />
           </TabsContent>
           <TabsContent value="volunteer">

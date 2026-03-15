@@ -47,7 +47,7 @@ function DrainMap() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-5xl font-bold tracking-tighter">Drain Map</h1>
-          <p className="text-text/60 mt-1">Click a marker to report a blocked drain, or volunteer to fix it if it's something you can safely handle.</p>
+          <p className="text-text/60 mt-1">Click a marker to view the drain's details, add an update on its status, or volunteer to help maintain it.</p>
         </div>
         <Button
           size="icon"

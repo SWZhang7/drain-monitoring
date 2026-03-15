@@ -30,7 +30,7 @@ async function seed() {
     const item = {
       D_Id: randomUUID(),
       ...drain,
-      sentimentScore: 5,
+      sentimentScore: 10,
       reportCount: 0,
     }
     await docClient.send(new PutCommand({ TableName: TABLE, Item: item }))
