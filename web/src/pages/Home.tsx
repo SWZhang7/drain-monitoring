@@ -3,8 +3,8 @@ import { Link } from "@tanstack/react-router"
 import { Megaphone, MapPin, HandHelping, Activity } from "lucide-react"
 
 function Home() {
-  return <div className="w-full p-7">
-    <section className="flex flex-col items-center justify-center">
+  return <div className="w-full">
+    <section className="flex flex-col items-center justify-center p-7 pb-0">
       <h1 className="text-center text-5xl font-bold max-w-[350px] tracking-tighter">
         Blocked drain? Let us know
       </h1>
@@ -17,22 +17,19 @@ function Home() {
           Report a Blocked Drain
         </Button>
       </Link>
-
-      <div className="mt-8 flex items-center gap-2 relative">
-        <div className="bg-accent w-64 h-96 relative top-[-10rem] rounded-2xl">
-        </div>
-        <div className="bg-accent w-64 h-64 relative rounded-2xl">
-        </div>
-        <div className="bg-accent w-64 h-64 relative rounded-2xl">
-        </div>
-        <div className="bg-accent w-64 h-64 relative rounded-2xl">
-        </div>
-        <div className="bg-accent w-64 h-96 relative top-[-10rem] rounded-2xl">
-        </div>
-      </div>
     </section>
 
-    <section className="px-40 max-[700px]:px-[15px]">
+    <div className="overflow-x-hidden">
+      <div className="flex justify-center items-center gap-2 py-8">
+        <div className="bg-accent w-64 h-96 rounded-2xl shrink-0"></div>
+        <div className="bg-accent w-64 h-48 rounded-2xl shrink-0"></div>
+        <div className="bg-accent w-64 h-56 rounded-2xl shrink-0"></div>
+        <div className="bg-accent w-64 h-48 rounded-2xl shrink-0"></div>
+        <div className="bg-accent w-64 h-96 rounded-2xl shrink-0"></div>
+      </div>
+    </div>
+
+    <section className="mt-16 px-40 max-[700px]:px-[15px]">
       <h1 className="text-5xl font-bold max-w-[500px] tracking-tighter">
         Why is FloodWatch Important?
       </h1>
