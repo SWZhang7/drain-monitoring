@@ -2,9 +2,24 @@ import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { Menu, X } from 'lucide-react'
+import { useAuth } from '@/lib/authContext'
 
 function Nav() {
   const [open, setOpen] = useState(false)
+  const { token, logout } = useAuth()
+
+  const authButton = token ? (
+    <Button
+      onClick={logout}
+      className="rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors cursor-pointer"
+    >
+      Logout
+    </Button>
+  ) : (
+    <Link to="/admin">
+      <Button className="rounded-full bg-text text-white hover:bg-alt-accent transition-colors cursor-pointer">Login</Button>
+    </Link>
+  )
 
   return (
     <>
@@ -17,7 +32,7 @@ function Nav() {
             <li><Link className="hover:text-alt-accent transition-colors" to="/">Home</Link></li>
             <li><Link className="hover:text-alt-accent transition-colors" to="/map">Map</Link></li>
           </ul>
-          <Button className="rounded-full bg-text text-white hover:bg-alt-accent transition-colors cursor-pointer">Login</Button>
+          {authButton}
         </div>
 
         {/* Hamburger */}
@@ -31,7 +46,7 @@ function Nav() {
         <div className="hidden max-[500px]:flex flex-col items-center gap-4 px-8 py-4 border-t border-[#ebebeb]">
           <Link className="hover:text-alt-accent transition-colors" to="/" onClick={() => setOpen(false)}>Home</Link>
           <Link className="hover:text-alt-accent transition-colors" to="/map" onClick={() => setOpen(false)}>Map</Link>
-          <Button className="rounded-full bg-text text-white hover:bg-alt-accent transition-colors cursor-pointer w-fit">Login</Button>
+          {authButton}
         </div>
       )}
 

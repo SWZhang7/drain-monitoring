@@ -165,7 +165,7 @@ export function DrainDialog({ open, onClose, drainName, drainId, online }: Drain
             <TabsTrigger value="volunteer" className="flex-1 cursor-pointer">Volunteer</TabsTrigger>
           </TabsList>
           <TabsContent value="report">
-            <p className="text-sm text-muted-foreground mt-3 mb-1">See a drain? Add information for your local councillor.</p>
+            <p className="text-sm text-muted-foreground mt-3 mb-1">See a drain you want to tell us about? Add information for your local councillor.</p>
             <ReportForm drainId={drainId ?? ""} onClose={onClose} />
           </TabsContent>
           <TabsContent value="volunteer">

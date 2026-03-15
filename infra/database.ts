@@ -1,5 +1,3 @@
-/// <reference path="./sst.d.ts" />
-
 // DynamoDB tables for heartbeat and sensor data monitoring
 
 export const heartbeatTable = new sst.aws.Dynamo("SensorHeartbeat", {

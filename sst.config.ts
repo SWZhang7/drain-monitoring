@@ -22,6 +22,7 @@ export default $config({
       SensorDataTable: database.sensorDataTable.name,
       UserPoolId: cognito.userPool.id,
       UserPoolArn: cognito.userPool.arn,
+      UserPoolClientId: cognito.userPoolClient.id,
     };
   },
 });

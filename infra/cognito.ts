@@ -1,18 +1,10 @@
-/// <reference path="./sst.d.ts" />
-
 import * as aws from "@pulumi/aws";
 
 export const userPool = new sst.aws.CognitoUserPool("DrainMonitoringPool", {
   usernames: ["email"],
-  mfa: "off",
-  passwords: {
-    minLength: 12,
-    lowercase: true,
-    uppercase: true,
-    numbers: true,
-    symbols: true,
-  },
 });
+
+export const userPoolClient = userPool.addClient("DrainMonitoringWebClient");
 
 // Use Pulumi AWS directly since SST v3 doesn't have CognitoUserPoolGroup
 export const operatorsGroup = new aws.cognito.UserGroup("OperatorsGroup", {

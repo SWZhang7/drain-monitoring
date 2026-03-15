@@ -14,6 +14,11 @@ declare module "sst" {
       "id": string
       "type": "sst.aws.CognitoUserPool"
     }
+    "DrainMonitoringWebClient": {
+      "id": string
+      "secret": string
+      "type": "sst.aws.CognitoUserPoolClient"
+    }
     "Drains": {
       "name": string
       "type": "sst.aws.Dynamo"
