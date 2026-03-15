@@ -19,3 +19,10 @@ export const sensorDataTable = new sst.aws.Dynamo("SensorData", {
   primaryIndex: { hashKey: "SensorId", rangeKey: "Timestamp" },
   ttl: "Timestamp",
 });
+
+export const wsConnectionsTable = new sst.aws.Dynamo("WebSocketConnections", {
+  fields: {
+    ConnectionId: "string",
+  },
+  primaryIndex: { hashKey: "ConnectionId" },
+});
