@@ -3,6 +3,7 @@
 
 @theme {
   --color-accent: var(--accent);
+  --color-alt-accent: var(--alt-accent);
   --color-text: var(--text);
   --color-bg: var(--bg);
   --color-border: var(--border);

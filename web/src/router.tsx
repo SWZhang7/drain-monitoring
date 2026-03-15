@@ -1,12 +1,20 @@
 import { createRouter, createRoute, createRootRoute, Outlet } from '@tanstack/react-router'
 import Nav from './components/Nav'
+import Footer from './components/Footer'
 import Home from './pages/Home'
 import DrainMap from './pages/DrainMap'
-import { createElement } from 'react'
 
-const rootRoute = createRootRoute({
-  component: () => createElement('div', null, createElement(Nav), createElement(Outlet)),
-})
+function RootLayout() {
+  return (
+    <div>
+      <Nav />
+      <Outlet />
+      <Footer />
+    </div>
+  )
+}
+
+const rootRoute = createRootRoute({ component: RootLayout })
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
