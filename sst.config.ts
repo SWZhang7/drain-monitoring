@@ -18,7 +18,6 @@ export default $config({
     await import("./infra/AdminSeed");
 
     return {
-      MyBucket: storage.bucket.name,
       HeartbeatTable: database.heartbeatTable.name,
       SensorDataTable: database.sensorDataTable.name,
       UserPoolId: cognito.userPool.id,

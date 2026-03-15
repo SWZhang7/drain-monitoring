@@ -1,63 +1,36 @@
-import { Handler } from "aws-lambda";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { Handler } from "aws-lambda"
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
+import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb"
+import { Resource } from "sst"
 
-const dynamoClient = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(dynamoClient);
+const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 
-const HEARTBEAT_TABLE = "SensorHeartbeat";
-
-export const handler: Handler = async (event: any) => {
+export const handler: Handler = async (event) => {
   try {
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(event.body || "{}")
+    const { drainId } = body
 
-    const { sensorId } = body;
+    if (!drainId) return jsonResponse(400, { error: "drainId is required" })
 
-    if (!sensorId) {
-      return jsonResponse(400, {
-        error: "Missing required field: sensorId",
-      });
-    }
+    await docClient.send(new UpdateCommand({
+      TableName: Resource.Drains.name,
+      Key: { D_Id: drainId },
+      ConditionExpression: "attribute_exists(D_Id)",
+      UpdateExpression: "SET lastSeen = :now",
+      ExpressionAttributeValues: { ":now": Date.now() },
+    }))
 
-    const now = new Date().toISOString();
-    const timestamp = Date.now();
-
-    const heartbeatItem = {
-      SensorId: sensorId,
-      LastHeartbeat: now,
-      Timestamp: timestamp,
-      Status: "ACTIVE",
-    };
-
-    await docClient.send(
-      new PutCommand({
-        TableName: HEARTBEAT_TABLE,
-        Item: heartbeatItem,
-      })
-    );
-
-    return jsonResponse(200, {
-      success: true,
-      message: `Heartbeat recorded for sensor ${sensorId}`,
-      data: heartbeatItem,
-    });
-  } catch (error: any) {
-    console.error("Heartbeat error:", error);
-
-    return jsonResponse(500, {
-      error: "Failed to record heartbeat",
-      details: error.message,
-    });
+    return jsonResponse(200, { success: true })
+  } catch (err) {
+    console.error("heartbeat error:", err)
+    return jsonResponse(500, { error: "Internal server error" })
   }
-};
+}
 
-function jsonResponse(statusCode: number, body: any) {
+function jsonResponse(statusCode: number, body: unknown) {
   return {
     statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    },
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
     body: JSON.stringify(body),
-  };
+  }
 }
