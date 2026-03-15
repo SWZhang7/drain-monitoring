@@ -7,6 +7,16 @@
   --color-text: var(--text);
   --color-bg: var(--bg);
   --color-border: var(--border);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-popover: var(--popover);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-destructive: var(--destructive);
+  --color-ring: var(--ring);
 }
 
 :root {
@@ -27,6 +37,21 @@
   --heading: 'DM Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
   --nav: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   --logo: 'DM Sans', system-ui, sans-serif;
+
+  /* shadcn required vars */
+  --background: #ffffff;
+  --foreground: #171717;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #171717;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #171717;
+  --destructive: #ef4444;
+  --ring: #171717;
+  --radius: 0.5rem;
 
   font-family: var(--sans);
   letter-spacing: 0.18px;

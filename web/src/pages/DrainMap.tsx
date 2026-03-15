@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Map, MapControls, MapMarker, MarkerContent, useMap } from "@/components/ui/map"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { DrainDialog } from "@/components/DrainDialog"
 import { Moon, Sun, Loader2, Droplets, Flag } from "lucide-react"
 
 const JAMAICA = { center: [-77.3, 18.15] as [number, number], zoom: 8.6 }
@@ -47,13 +48,14 @@ function DrainStatus({ drainId }: { drainId: string }) {
 
 function DrainMap() {
   const [theme, setTheme] = useState<"light" | "dark">("dark")
+  const [selectedDrain, setSelectedDrain] = useState<string | null>(null)
 
   return (
     <div className="w-full p-7">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-5xl font-bold tracking-tighter">Drain Map</h1>
-          <p className="text-text/60 mt-1">View and report blocked roadside drains across Jamaica</p>
+          <p className="text-text/60 mt-1">Click a marker to report a blocked drain or volunteer to fix it.</p>
         </div>
         <Button
           size="icon"
@@ -69,7 +71,7 @@ function DrainMap() {
         <Map theme={theme} center={[-77.3, 18.15]} zoom={8.6}>
           <MapLoader />
           <CenterJamaica />
-          <MapMarker longitude={-77.3664} latitude={18.3919}>
+          <MapMarker longitude={-77.3664} latitude={18.3919} onClick={() => setSelectedDrain("Brown's Town")}>
             <MarkerContent>
               <div className="flex flex-col items-center gap-1">
                 <div className="relative group flex items-center justify-center w-9 h-9 rounded-full bg-accent border-2 border-text shadow-lg hover:bg-alt-accent hover:border-white transition-colors cursor-pointer">
@@ -83,6 +85,11 @@ function DrainMap() {
           <MapControls showCompass />
         </Map>
       </Card>
+      <DrainDialog
+        open={!!selectedDrain}
+        onClose={() => setSelectedDrain(null)}
+        drainName={selectedDrain ?? ""}
+      />
     </div>
   )
 }
