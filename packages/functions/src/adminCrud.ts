@@ -9,8 +9,10 @@ import {
   AdminAddUserToGroupCommand,
   AdminRemoveUserFromGroupCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
+import { SESClient, VerifyEmailIdentityCommand } from "@aws-sdk/client-ses";
 
 const cognitoClient = new CognitoIdentityProviderClient({});
+const sesClient = new SESClient({});
 
 const USER_POOL_ID = process.env.COGNITO_USER_POOL_ID || "";
 const OPERATOR_GROUP = "Operators";
@@ -56,10 +58,10 @@ export const handler: Handler = async (event: any) => {
 async function createOperator(event: any) {
   try {
     const body = JSON.parse(event.body || "{}");
-    const { email, firstName, lastName, tempPassword } = body;
+    const { email, name, description } = body;
 
-    if (!email) {
-      return jsonResponse(400, { error: "Missing required field: email" });
+    if (!email || !name || !description) {
+      return jsonResponse(400, { error: "Missing required fields: email, name, description" });
     }
 
     const createUserCommand = new AdminCreateUserCommand({
@@ -68,10 +70,10 @@ async function createOperator(event: any) {
       UserAttributes: [
         { Name: "email", Value: email },
         { Name: "email_verified", Value: "true" },
-        { Name: "given_name", Value: firstName || "" },
-        { Name: "family_name", Value: lastName || "" },
+        { Name: "name", Value: name },
+        { Name: "custom:description", Value: description },
       ],
-      TemporaryPassword: tempPassword || generateTempPassword(),
+      TemporaryPassword: generateTempPassword(),
       MessageAction: "SUPPRESS",
     });
 
@@ -85,6 +87,9 @@ async function createOperator(event: any) {
       })
     );
 
+    // Kick off SES email verification so we can send them emails
+    await sesClient.send(new VerifyEmailIdentityCommand({ EmailAddress: email }));
+
     return jsonResponse(201, {
       success: true,
       message: `Operator ${email} created successfully`,
@@ -92,6 +97,9 @@ async function createOperator(event: any) {
     });
   } catch (error: any) {
     console.error("Create operator error:", error);
+    if (error.name === "UsernameExistsException") {
+      return jsonResponse(409, { error: "An operator with this email already exists" });
+    }
     return jsonResponse(500, {
       error: "Failed to create operator",
       details: error.message,
@@ -101,32 +109,25 @@ async function createOperator(event: any) {
 
 async function listOperators(event: any) {
   try {
-    const result = await cognitoClient.send(
-      new ListUsersInGroupCommand({
-        UserPoolId: USER_POOL_ID,
-        GroupName: OPERATOR_GROUP,
-      })
-    );
+    const [operatorsResult, adminsResult] = await Promise.all([
+      cognitoClient.send(new ListUsersInGroupCommand({ UserPoolId: USER_POOL_ID, GroupName: OPERATOR_GROUP })),
+      cognitoClient.send(new ListUsersInGroupCommand({ UserPoolId: USER_POOL_ID, GroupName: "Admins" })),
+    ])
 
-    const operators = result.Users?.map((user) => ({
-      username: user.Username,
-      attributes: user.Attributes?.reduce(
-        (acc: any, attr) => ({
-          ...acc,
-          [attr.Name || ""]: attr.Value,
-        }),
-        {}
-      ),
-      status: user.UserStatus,
-    })) || [];
+    const adminUsernames = new Set(adminsResult.Users?.map((u) => u.Username) ?? [])
 
-    return jsonResponse(200, { success: true, data: operators });
+    const operators = (operatorsResult.Users ?? [])
+      .filter((user) => !adminUsernames.has(user.Username))
+      .map((user) => ({
+        username: user.Username,
+        attributes: user.Attributes?.reduce((acc: any, attr) => ({ ...acc, [attr.Name || ""]: attr.Value }), {}),
+        status: user.UserStatus,
+      }))
+
+    return jsonResponse(200, { success: true, data: operators })
   } catch (error: any) {
-    console.error("List operators error:", error);
-    return jsonResponse(500, {
-      error: "Failed to list operators",
-      details: error.message,
-    });
+    console.error("List operators error:", error)
+    return jsonResponse(500, { error: "Failed to list operators", details: error.message })
   }
 }
 
@@ -177,7 +178,7 @@ async function getOperator(email: string) {
 async function updateOperator(email: string, event: any) {
   try {
     const body = JSON.parse(event.body || "{}");
-    const { firstName, lastName } = body;
+    const { name, description } = body;
 
     if (!email) {
       return jsonResponse(400, { error: "Missing required parameter: email" });
@@ -185,13 +186,8 @@ async function updateOperator(email: string, event: any) {
 
     const userAttributes = [];
 
-    if (firstName) {
-      userAttributes.push({ Name: "given_name", Value: firstName });
-    }
-
-    if (lastName) {
-      userAttributes.push({ Name: "family_name", Value: lastName });
-    }
+    if (name) userAttributes.push({ Name: "name", Value: name });
+    if (description) userAttributes.push({ Name: "custom:description", Value: description });
 
     if (userAttributes.length === 0) {
       return jsonResponse(400, { error: "No attributes to update" });

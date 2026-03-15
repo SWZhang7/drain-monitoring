@@ -1,14 +1,9 @@
-export type DrainStatus = "normal" | "elevated" | "critical"
-
 export type DrainPublic = {
   D_Id: string
   publicName: string
   latitude: number
   longitude: number
-  height: number | null
-  online: boolean
-  fillPercent: number | null
-  drainStatus: DrainStatus
+  height: number
 }
 
 export type DrainItem = DrainPublic & {

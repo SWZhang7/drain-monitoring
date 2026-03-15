@@ -26,6 +26,43 @@ api.route("GET /drains/{id}", {
   permissions: dbPermissions,
 })
 
+// Admin — protected
+api.route(
+  "GET /admin/drains",
+  { handler: "packages/functions/src/drains.listPrivate", link: [drainsTable], permissions: dbPermissions },
+  { auth: { jwt: { authorizer: cognitoAuthorizer.id } } },
+)
+
+api.route(
+  "GET /admin/drains/{id}/messages",
+  { handler: "packages/functions/src/drains.listMessages", link: [drainsTable, drainMessagesTable], permissions: dbPermissions },
+  { auth: { jwt: { authorizer: cognitoAuthorizer.id } } },
+)
+
+api.route(
+  "POST /admin/drains/{id}/reset-sentiment",
+  { handler: "packages/functions/src/drains.resetSentiment", link: [drainsTable], permissions: dbPermissions },
+  { auth: { jwt: { authorizer: cognitoAuthorizer.id } } },
+)
+
+api.route(
+  "PATCH /admin/drains/{id}",
+  { handler: "packages/functions/src/drains.patch", link: [drainsTable], permissions: dbPermissions },
+  { auth: { jwt: { authorizer: cognitoAuthorizer.id } } },
+)
+
+// Operator CRUD — admin only (group check enforced in Lambda)
+const operatorHandler = {
+  handler: "packages/functions/src/adminCrud.handler",
+  environment: { COGNITO_USER_POOL_ID: userPool.id },
+  permissions: cognitoPermissions,
+}
+api.route("GET /admin/operators", operatorHandler, { auth: { jwt: { authorizer: cognitoAuthorizer.id } } })
+api.route("POST /admin/operators", operatorHandler, { auth: { jwt: { authorizer: cognitoAuthorizer.id } } })
+api.route("GET /admin/operators/{email}", operatorHandler, { auth: { jwt: { authorizer: cognitoAuthorizer.id } } })
+api.route("PUT /admin/operators/{email}", operatorHandler, { auth: { jwt: { authorizer: cognitoAuthorizer.id } } })
+api.route("DELETE /admin/operators/{email}", operatorHandler, { auth: { jwt: { authorizer: cognitoAuthorizer.id } } })
+
 // Reports
 api.route("POST /reports", {
   handler: "packages/functions/src/reports.create",

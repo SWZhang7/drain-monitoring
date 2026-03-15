@@ -4,12 +4,15 @@ import Nav from './components/Nav'
 import Footer from './components/Footer'
 import Home from './pages/Home'
 import DrainMap from './pages/DrainMap'
+import Admin from './pages/Admin'
 
 function RootLayout() {
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       <Nav />
-      <Outlet />
+      <div className="flex-1">
+        <Outlet />
+      </div>
       <Footer />
       <Toaster richColors position="bottom-right" />
     </div>
@@ -30,7 +33,13 @@ const drainMapRoute = createRoute({
   component: DrainMap,
 })
 
-const routeTree = rootRoute.addChildren([homeRoute, drainMapRoute])
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin',
+  component: Admin,
+})
+
+const routeTree = rootRoute.addChildren([homeRoute, drainMapRoute, adminRoute])
 
 export const router = createRouter({ routeTree })
 

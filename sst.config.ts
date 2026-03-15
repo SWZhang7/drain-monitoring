@@ -19,12 +19,14 @@ export default $config({
     await import("./infra/AdminSeed");
 
     return {
+      ApiUrl: api.url,
       HeartbeatTable: database.heartbeatTable.name,
       SensorDataTable: database.sensorDataTable.name,
       WebSocketConnectionsTable: database.wsConnectionsTable.name,
       WebSocketUrl: websocket.ws.url,
       UserPoolId: cognito.userPool.id,
       UserPoolArn: cognito.userPool.arn,
+      UserPoolClientId: cognito.userPoolClient.id,
     };
   },
 });
