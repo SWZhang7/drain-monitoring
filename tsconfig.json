@@ -3,9 +3,13 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "strict": true,
+    "lib": ["ESNext"],
     "skipLibCheck": true,
-    "types": ["node"]
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strict": false,
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "./infra"]
   },
-  "include": ["infra/**/*", "sst.config.ts", "sst-env.d.ts"]
+  "include": ["infra/**/*", "packages/**/*", "sst.config.ts", "sst-env.d.ts"]
 }
