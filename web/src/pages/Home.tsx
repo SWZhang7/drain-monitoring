@@ -9,7 +9,7 @@ function Home() {
         Blocked drain? Let us know
       </h1>
 
-      <p className="mt-6 max-w-[400px] text-center">Blocked drains can cause flooding, damage roads, and disrupt your street. Report it today and let the NWA handle the rest.</p>
+      <p className="mt-6 max-w-[400px] text-center">Blocked roadside drains can cause flooding, damage roads, and disrupt your street. Report it today and let the NWA handle the rest.</p>
 
       <Link to="/map">
         <Button size={"xl"} className="mt-6 py-4 bg-text rounded-full text-white hover:bg-alt-accent hover:text-text hover:cursor-pointer transition-colors">
