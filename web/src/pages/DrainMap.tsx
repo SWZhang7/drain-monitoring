@@ -48,19 +48,19 @@ function DrainStatus({ drainId }: { drainId: string }) {
 
 function DrainMap() {
   const [theme, setTheme] = useState<"light" | "dark">("dark")
-  const [selectedDrain, setSelectedDrain] = useState<string | null>(null)
+  const [selectedDrain, setSelectedDrain] = useState<{ name: string; id: string } | null>(null)
 
   return (
     <div className="w-full p-7">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-5xl font-bold tracking-tighter">Drain Map</h1>
-          <p className="text-text/60 mt-1">Click a marker to report a blocked drain or volunteer to fix it.</p>
+          <p className="text-text/60 mt-1">Click a marker to report a blocked drain, or volunteer to fix it if it's something you can safely handle.</p>
         </div>
         <Button
           size="icon"
           variant="outline"
-          className="rounded-full"
+          className="rounded-full hover:cursor-pointer"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           aria-label="Toggle map theme"
         >
@@ -71,7 +71,7 @@ function DrainMap() {
         <Map theme={theme} center={[-77.3, 18.15]} zoom={8.6}>
           <MapLoader />
           <CenterJamaica />
-          <MapMarker longitude={-77.3664} latitude={18.3919} onClick={() => setSelectedDrain("Brown's Town")}>
+          <MapMarker longitude={-77.3664} latitude={18.3919} onClick={() => setSelectedDrain({ name: "Brown's Town", id: "browns-town-01" })}>
             <MarkerContent>
               <div className="flex flex-col items-center gap-1">
                 <div className="relative group flex items-center justify-center w-9 h-9 rounded-full bg-accent border-2 border-text shadow-lg hover:bg-alt-accent hover:border-white transition-colors cursor-pointer">
@@ -88,7 +88,8 @@ function DrainMap() {
       <DrainDialog
         open={!!selectedDrain}
         onClose={() => setSelectedDrain(null)}
-        drainName={selectedDrain ?? ""}
+        drainName={selectedDrain?.name ?? ""}
+        drainId={selectedDrain?.id}
       />
     </div>
   )

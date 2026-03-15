@@ -1,6 +1,9 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { useState, useEffect } from "react"
+import { useMutation } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
@@ -15,17 +18,37 @@ const reportSchema = z.object({
 const volunteerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   contact: z.string().email("Enter a valid email"),
-  availability: z.string().min(1, "Please provide your availability"),
+  availability: z.string().optional(),
 })
 
 type ReportForm = z.infer<typeof reportSchema>
 type VolunteerForm = z.infer<typeof volunteerSchema>
 
 function ReportForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm<ReportForm>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ReportForm>({
     resolver: zodResolver(reportSchema),
   })
-  const onSubmit = (data: ReportForm) => console.log("Report:", data)
+
+  const mutation = useMutation({
+    mutationFn: async (data: ReportForm) => {
+      // replace with your actual API call
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error("Failed to submit report")
+      return res.json()
+    },
+  })
+
+  const onSubmit = (data: ReportForm) => {
+    toast.promise(mutation.mutateAsync(data), {
+      loading: "Submitting your report...",
+      success: () => { reset(); return "Report submitted. Your councillor has been notified." },
+      error: "Something went wrong. Please try again.",
+    })
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 mt-4">
@@ -45,16 +68,41 @@ function ReportForm() {
         />
         {errors.description && <p className="text-xs text-red-500">{errors.description.message}</p>}
       </div>
-      <Button type="submit" className="rounded-full bg-text text-white hover:bg-alt-accent transition-colors cursor-pointer">Submit Report</Button>
+      <Button
+        type="submit"
+        disabled={mutation.isPending}
+        className="rounded-full bg-text text-white hover:bg-alt-accent transition-colors cursor-pointer"
+      >
+        Submit Report
+      </Button>
     </form>
   )
 }
 
 function VolunteerForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm<VolunteerForm>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<VolunteerForm>({
     resolver: zodResolver(volunteerSchema),
   })
-  const onSubmit = (data: VolunteerForm) => console.log("Volunteer:", data)
+
+  const mutation = useMutation({
+    mutationFn: async (data: VolunteerForm) => {
+      const res = await fetch("/api/volunteers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error("Failed to sign up")
+      return res.json()
+    },
+  })
+
+  const onSubmit = (data: VolunteerForm) => {
+    toast.promise(mutation.mutateAsync(data), {
+      loading: "Signing you up...",
+      success: () => { reset(); return "You're signed up. We'll connect you with the right person." },
+      error: "Something went wrong. Please try again.",
+    })
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 mt-4">
@@ -69,11 +117,17 @@ function VolunteerForm() {
         {errors.contact && <p className="text-xs text-red-500">{errors.contact.message}</p>}
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="v-avail">Availability</Label>
+        <Label htmlFor="v-avail">Availability <span className="text-xs text-muted-foreground">(Optional)</span></Label>
         <Input id="v-avail" placeholder="e.g. Weekends, mornings" {...register("availability")} />
         {errors.availability && <p className="text-xs text-red-500">{errors.availability.message}</p>}
       </div>
-      <Button type="submit" className="rounded-full bg-text text-white hover:bg-alt-accent transition-colors cursor-pointer">Volunteer</Button>
+      <Button
+        type="submit"
+        disabled={mutation.isPending}
+        className="rounded-full bg-text text-white hover:bg-alt-accent transition-colors cursor-pointer"
+      >
+        Volunteer
+      </Button>
     </form>
   )
 }
@@ -82,14 +136,38 @@ type DrainDialogProps = {
   open: boolean
   onClose: () => void
   drainName: string
+  drainId?: string
 }
 
-export function DrainDialog({ open, onClose, drainName }: DrainDialogProps) {
+type DrainStatusValue = "online" | "offline"
+
+function StatusBadge({ drainId }: { drainId: string }) {
+  const [status, setStatus] = useState<DrainStatusValue>("offline")
+
+  useEffect(() => {
+    const ws = new WebSocket(`wss://your-api/drains/${drainId}/status`)
+    ws.onmessage = (e) => setStatus(JSON.parse(e.data).status)
+    return () => ws.close()
+  }, [drainId])
+
+  const isOnline = status === "online"
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold font-mono tracking-wide ${isOnline ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+      <span className={`size-1.5 rounded-full ${isOnline ? "bg-green-500" : "bg-red-500"}`} />
+      {isOnline ? "Online" : "Offline"}
+    </span>
+  )
+}
+
+export function DrainDialog({ open, onClose, drainName, drainId }: DrainDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md pt-10 [&>button]:text-red-500 [&>button]:hover:text-red-700 [&>button]:cursor-pointer">
         <DialogHeader>
-          <DialogTitle>{drainName}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2.5">
+            {drainName}
+            {drainId && <StatusBadge drainId={drainId} />}
+          </DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="report" className="w-full flex flex-col">
           <TabsList className="w-full!">

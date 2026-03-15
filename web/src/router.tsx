@@ -1,4 +1,5 @@
 import { createRouter, createRoute, createRootRoute, Outlet } from '@tanstack/react-router'
+import { Toaster } from 'sonner'
 import Nav from './components/Nav'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -10,6 +11,7 @@ function RootLayout() {
       <Nav />
       <Outlet />
       <Footer />
+      <Toaster richColors position="bottom-right" />
     </div>
   )
 }
