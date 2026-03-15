@@ -13,7 +13,7 @@ const SUSTAINED_MS = 10 * 60 * 1000 // 10 minutes
 export const handler: Handler = async (event) => {
   try {
     const body = JSON.parse(event.body || "{}")
-    const { drainId, waterLevelCm } = body
+    const { drainId, waterLevelCm, co2Ppm } = body
 
     if (!drainId || waterLevelCm === undefined) {
       return jsonResponse(400, { error: "drainId and waterLevelCm are required" })
@@ -50,12 +50,13 @@ export const handler: Handler = async (event) => {
     await docClient.send(new UpdateCommand({
       TableName: Resource.Drains.name,
       Key: { D_Id: drainId },
-      UpdateExpression: "SET alertSince = :alertSince, alreadyAlerted = :alerted, fillPercent = :fill, drainStatus = :status",
+      UpdateExpression: "SET alertSince = :alertSince, alreadyAlerted = :alerted, fillPercent = :fill, drainStatus = :status, co2Ppm = :co2",
       ExpressionAttributeValues: {
         ":alertSince": alertSince,
         ":alerted": newAlerted,
         ":fill": fillPercent,
         ":status": drainStatus,
+        ":co2": co2Ppm ?? null,
       },
     }))
 

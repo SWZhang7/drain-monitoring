@@ -11,7 +11,7 @@ export const api = new sst.aws.ApiGatewayV2("MyApi", {
   cors: {
     allowOrigins: $app.stage === "production" ? ["https://your-app.netlify.app"] : ["*"],
     allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   },
 })
 
@@ -23,7 +23,7 @@ const cognitoAuthorizer = api.addAuthorizer({
   },
 })
 
-// Drains
+const cognitoPermissions = [{ actions: ["cognito-idp:AdminCreateUser", "cognito-idp:AdminDeleteUser", "cognito-idp:AdminGetUser", "cognito-idp:AdminUpdateUserAttributes", "cognito-idp:AdminAddUserToGroup", "cognito-idp:AdminRemoveUserFromGroup", "cognito-idp:ListUsersInGroup", "ses:VerifyEmailIdentity"], resources: ["*"] }]
 api.route("GET /drains", {
   handler: "packages/functions/src/drains.list",
   link: [drainsTable],
@@ -39,13 +39,39 @@ api.route("GET /drains/{id}", {
 // Admin — protected
 api.route(
   "GET /admin/drains",
-  {
-    handler: "packages/functions/src/drains.listPrivate",
-    link: [drainsTable],
-    permissions: dbPermissions,
-  },
+  { handler: "packages/functions/src/drains.listPrivate", link: [drainsTable], permissions: dbPermissions },
   { auth: { jwt: { authorizer: cognitoAuthorizer.id } } },
 )
+
+api.route(
+  "GET /admin/drains/{id}/messages",
+  { handler: "packages/functions/src/drains.listMessages", link: [drainsTable, drainMessagesTable], permissions: dbPermissions },
+  { auth: { jwt: { authorizer: cognitoAuthorizer.id } } },
+)
+
+api.route(
+  "POST /admin/drains/{id}/reset-sentiment",
+  { handler: "packages/functions/src/drains.resetSentiment", link: [drainsTable], permissions: dbPermissions },
+  { auth: { jwt: { authorizer: cognitoAuthorizer.id } } },
+)
+
+api.route(
+  "PATCH /admin/drains/{id}",
+  { handler: "packages/functions/src/drains.patch", link: [drainsTable], permissions: dbPermissions },
+  { auth: { jwt: { authorizer: cognitoAuthorizer.id } } },
+)
+
+// Operator CRUD — admin only (group check enforced in Lambda)
+const operatorHandler = {
+  handler: "packages/functions/src/adminCrud.handler",
+  environment: { COGNITO_USER_POOL_ID: userPool.id },
+  permissions: cognitoPermissions,
+}
+api.route("GET /admin/operators", operatorHandler, { auth: { jwt: { authorizer: cognitoAuthorizer.id } } })
+api.route("POST /admin/operators", operatorHandler, { auth: { jwt: { authorizer: cognitoAuthorizer.id } } })
+api.route("GET /admin/operators/{email}", operatorHandler, { auth: { jwt: { authorizer: cognitoAuthorizer.id } } })
+api.route("PUT /admin/operators/{email}", operatorHandler, { auth: { jwt: { authorizer: cognitoAuthorizer.id } } })
+api.route("DELETE /admin/operators/{email}", operatorHandler, { auth: { jwt: { authorizer: cognitoAuthorizer.id } } })
 
 // Reports
 api.route("POST /reports", {
