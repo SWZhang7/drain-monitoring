@@ -1,11 +1,15 @@
-export type DrainItem = {
+export type DrainPublic = {
   D_Id: string
   publicName: string
-  privateName: string
   latitude: number
   longitude: number
-  sentimentScore: number // 0-10, aggregated from reports
-  operatorEmail: string  // SES recipient for volunteer notifications
+}
+
+export type DrainItem = DrainPublic & {
+  privateName: string
+  sentimentScore: number
+  reportCount: number
+  operatorEmail: string
 }
 
 export type DrainEventItem = {

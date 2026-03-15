@@ -8,7 +8,10 @@ const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 export const list: Handler = async () => {
   try {
     const result = await docClient.send(new ScanCommand({ TableName: Resource.Drains.name }))
-    return jsonResponse(200, result.Items || [])
+    const items = (result.Items || []).map(({ D_Id, publicName, latitude, longitude }) => ({
+      D_Id, publicName, latitude, longitude,
+    }))
+    return jsonResponse(200, items)
   } catch (err) {
     console.error("list drains error:", err)
     return jsonResponse(500, { error: "Internal server error" })
@@ -25,7 +28,9 @@ export const get: Handler = async (event) => {
     )
 
     if (!result.Item) return jsonResponse(404, { error: "Drain not found" })
-    return jsonResponse(200, result.Item)
+
+    const { D_Id, publicName, latitude, longitude } = result.Item
+    return jsonResponse(200, { D_Id, publicName, latitude, longitude })
   } catch (err) {
     console.error("get drain error:", err)
     return jsonResponse(500, { error: "Internal server error" })
