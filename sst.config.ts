@@ -15,6 +15,7 @@ export default $config({
     const cognito = await import("./infra/cognito");
     const messaging = await import("./infra/messaging");
     await import("./infra/api");
+     await import("./infra/AdminSeed");
 
     return {
       MyBucket: storage.bucket.name,

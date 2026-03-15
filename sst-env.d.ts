@@ -6,6 +6,31 @@
 
 declare module "sst" {
   export interface Resource {
+    "DrainMonitoringPool": {
+      "id": string
+      "type": "sst.aws.CognitoUserPool"
+    }
+    "MyApi": {
+      "type": "sst.aws.ApiGatewayV2"
+      "url": string
+    }
+    "MyBucket": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "MyFunction": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
+    "SensorData": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "SensorHeartbeat": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />

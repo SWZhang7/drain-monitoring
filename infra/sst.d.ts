@@ -6,7 +6,7 @@ declare module "aws" {
         props?: any
       );
     }
-    class Dynamodb {
+    class DynamoDb {
       constructor(name: string, props?: any);
     }
     class CognitoUserPool {

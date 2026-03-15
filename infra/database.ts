@@ -2,24 +2,19 @@
 
 // DynamoDB tables for heartbeat and sensor data monitoring
 
-export const heartbeatTable = new sst.aws.Dynamodb("SensorHeartbeat", {
+export const heartbeatTable = new sst.aws.Dynamo("SensorHeartbeat", {
   fields: {
     SensorId: "string",
-    LastHeartbeat: "string",
     Timestamp: "number",
-    Status: "string",
   },
   primaryIndex: { hashKey: "SensorId", rangeKey: "Timestamp" },
   ttl: "Timestamp",
 });
 
-export const sensorDataTable = new sst.aws.Dynamodb("SensorData", {
+export const sensorDataTable = new sst.aws.Dynamo("SensorData", {
   fields: {
     SensorId: "string",
     Timestamp: "number",
-    Level: "number",
-    Location: "string",
-    ReceivedAt: "string",
   },
   primaryIndex: { hashKey: "SensorId", rangeKey: "Timestamp" },
   ttl: "Timestamp",

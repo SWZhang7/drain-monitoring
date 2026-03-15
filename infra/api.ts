@@ -32,6 +32,11 @@ export const api = new sst.aws.ApiGatewayV2("MyApi", {
   cors: true,
 });
 
+export const myFunction = new sst.aws.Function("MyFunction", {
+  handler: "packages/functions/src/api.handler",
+  url: true, // this enables the lambda function URL
+});
+
 // Heartbeat endpoint
 api.route("POST /heartbeat", {
   handler: "packages/functions/src/heartbeat.handler",

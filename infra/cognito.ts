@@ -1,35 +1,23 @@
 /// <reference path="./sst.d.ts" />
 
-// Cognito User Pool for authentication and operator management
+import * as aws from "@pulumi/aws";
 
 export const userPool = new sst.aws.CognitoUserPool("DrainMonitoringPool", {
-  emails: ["noreply@drain-monitoring.local"],
-  defaultAutoVerifiedAttributes: ["email"],
-  mfa: "optional",
-  passwordPolicy: {
+  usernames: ["email"],
+  mfa: "off",
+  passwords: {
     minLength: 12,
-    requireLowercase: true,
-    requireUppercase: true,
-    requireNumbers: true,
-    requireSymbols: true,
+    lowercase: true,
+    uppercase: true,
+    numbers: true,
+    symbols: true,
   },
 });
 
-// Create admin user (hardcoded as per requirements)
-export const adminUser = userPool.attachPermissions([
-  {
-    actions: ["cognito-idp:AdminCreateUser", "cognito-idp:AdminDeleteUser"],
-    resources: ["*"],
-  },
-]);
-
-// Create Operators group for role-based access control
-export const operatorsGroup = new sst.aws.CognitoUserPoolGroup(
-  "OperatorsGroup",
-  {
-    userPool,
-    name: "Operators",
-    description: "Group for drain monitoring operators",
-    priority: 1,
-  }
-);
+// Use Pulumi AWS directly since SST v3 doesn't have CognitoUserPoolGroup
+export const operatorsGroup = new aws.cognito.UserGroup("OperatorsGroup", {
+  userPoolId: userPool.id,
+  name: "Operators",
+  description: "Group for drain monitoring operators",
+  precedence: 1,
+});
