@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react"
-import { Map, MapControls, MapMarker, MarkerContent, useMap } from "@/components/ui/map"
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { Map, MapControls, useMap } from "@/components/ui/map"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { DrainDialog } from "@/components/DrainDialog"
-import { Moon, Sun, Loader2, Droplets, Flag } from "lucide-react"
+import { DrainMarker } from "@/components/DrainMarker"
+import { Moon, Sun, Loader2, Flag } from "lucide-react"
+import { fetchDrains } from "@/lib/api"
 
 const JAMAICA = { center: [-77.3, 18.15] as [number, number], zoom: 8.6 }
 
@@ -30,25 +33,14 @@ function MapLoader() {
   )
 }
 
-type DrainStatusValue = "online" | "offline"
-
-function DrainStatus({ drainId }: { drainId: string }) {
-  const [status, setStatus] = useState<DrainStatusValue>("offline")
-
-  useEffect(() => {
-    const ws = new WebSocket(`wss://your-api/drains/${drainId}/status`)
-    ws.onmessage = (e) => setStatus(JSON.parse(e.data).status)
-    return () => ws.close()
-  }, [drainId])
-
-  return (
-    <span className={`absolute -top-1 -right-1 size-3 rounded-full border-2 border-white ${status === "online" ? "bg-green-500" : "bg-red-500"}`} />
-  )
-}
-
 function DrainMap() {
   const [theme, setTheme] = useState<"light" | "dark">("dark")
   const [selectedDrain, setSelectedDrain] = useState<{ name: string; id: string } | null>(null)
+
+  const { data: drains = [] } = useQuery({
+    queryKey: ["drains"],
+    queryFn: fetchDrains,
+  })
 
   return (
     <div className="w-full p-7">
@@ -71,17 +63,16 @@ function DrainMap() {
         <Map theme={theme} center={[-77.3, 18.15]} zoom={8.6}>
           <MapLoader />
           <CenterJamaica />
-          <MapMarker longitude={-77.3664} latitude={18.3919} onClick={() => setSelectedDrain({ name: "Brown's Town", id: "browns-town-01" })}>
-            <MarkerContent>
-              <div className="flex flex-col items-center gap-1">
-                <div className="relative group flex items-center justify-center w-9 h-9 rounded-full bg-accent border-2 border-text shadow-lg hover:bg-alt-accent hover:border-white transition-colors cursor-pointer">
-                  <Droplets className="size-4 text-text group-hover:text-white transition-colors" />
-                  <DrainStatus drainId="browns-town-01" />
-                </div>
-                <div className="bg-text text-white text-xs font-semibold px-2 py-0.5 rounded-md shadow-md whitespace-nowrap">Brown's Town</div>
-              </div>
-            </MarkerContent>
-          </MapMarker>
+          {drains.map((drain) => (
+            <DrainMarker
+              key={drain.D_Id}
+              id={drain.D_Id}
+              name={drain.publicName}
+              latitude={drain.latitude}
+              longitude={drain.longitude}
+              onClick={setSelectedDrain}
+            />
+          ))}
           <MapControls showCompass />
         </Map>
       </Card>

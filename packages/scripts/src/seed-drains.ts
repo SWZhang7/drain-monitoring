@@ -1,9 +1,10 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb"
+import { Resource } from "sst"
 import { randomUUID } from "crypto"
 
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({ region: "us-east-1" }))
-const TABLE = "Drains"
+const TABLE = Resource.Drains.name
 
 const drains = [
   { publicName: "Maxfield Avenue Storm Drain", privateName: "KGN-MAX-001", latitude: 17.9987, longitude: -76.7891, operatorEmail: "operator@floodwatch.com" },
@@ -15,7 +16,7 @@ const drains = [
   { publicName: "Gregory Park Storm Channel", privateName: "POR-GRP-001", latitude: 17.9601, longitude: -76.8912, operatorEmail: "operator@floodwatch.com" },
   { publicName: "Spanish Town Market Drain", privateName: "STN-MKT-001", latitude: 17.9909, longitude: -76.9566, operatorEmail: "operator@floodwatch.com" },
   { publicName: "Brunswick Avenue Culvert", privateName: "STN-BRN-001", latitude: 17.9872, longitude: -76.9489, operatorEmail: "operator@floodwatch.com" },
-  { publicName: "Brown's Town Main Street Drain", privateName: "BRT-MNS-001", latitude: 18.3919, longitude: -77.3664, operatorEmail: "briefrater@gmail.com" },
+  { publicName: "Brown's Town Main Street Drain", privateName: "BRT-MNS-001", latitude: 18.3919, longitude: -77.3664, operatorEmail: "gabria464@gmail.com" },
   { publicName: "Ocho Rios Shaw Park Drain", privateName: "OCR-SHP-001", latitude: 18.4041, longitude: -77.1046, operatorEmail: "operator@floodwatch.com" },
   { publicName: "Montego Bay Dump Road Channel", privateName: "MBJ-DMP-001", latitude: 18.4762, longitude: -77.9162, operatorEmail: "operator@floodwatch.com" },
   { publicName: "Barnett Street Storm Drain", privateName: "MBJ-BAR-001", latitude: 18.4721, longitude: -77.9201, operatorEmail: "operator@floodwatch.com" },

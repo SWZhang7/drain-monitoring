@@ -100,7 +100,7 @@ function VolunteerForm({ drainId }: { drainId: string }) {
   const onSubmit = (data: VolunteerForm) => {
     toast.promise(mutation.mutateAsync(data), {
       loading: "Signing you up...",
-      success: () => { reset(); return "You're signed up. We'll connect you with the right person." },
+      success: () => { reset(); return "You're all signed up! We've sent your information to your councillor, and they'll be in touch shortly." },
       error: "Something went wrong. Please try again.",
     })
   }

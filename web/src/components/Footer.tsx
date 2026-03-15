@@ -7,7 +7,7 @@ function Footer() {
         <img src={jamaicaFlag} alt="Jamaica flag" className="w-5 h-5 object-cover rounded-sm" />
         Product of Jamaica
       </span>
-      <span className="text-sm text-text/60">© {new Date().getFullYear()} FloodWatch. All rights reserved.</span>
+      <span className="text-sm text-right text-text/60">© {new Date().getFullYear()} FloodWatch. All rights reserved.</span>
     </footer>
   )
 }
