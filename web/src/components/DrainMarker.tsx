@@ -1,25 +1,73 @@
+import { useState, useEffect } from "react"
 import { MapMarker, MarkerContent } from "@/components/ui/map"
-import { Droplets } from "lucide-react"
+import { Droplets, Circle, XCircle } from "lucide-react"
 
-type DrainMarkerProps = {
-  readonly id: string
-  readonly name: string
-  readonly latitude: number
-  readonly longitude: number
-  readonly online: boolean
-  readonly onClick: (drain: { id: string; name: string }) => void
+const WS_URL = import.meta.env.VITE_WS_URL ?? ""
+
+type DrainStatusValue = "online" | "offline"
+
+function DrainStatus({ drainId }: { drainId: string }) {
+  const [status, setStatus] = useState<DrainStatusValue>("offline")
+
+  useEffect(() => {
+    if (!WS_URL || !drainId) return
+
+    console.log("Connecting to:", WS_URL)
+    const ws = new WebSocket(WS_URL)
+
+    ws.onopen = () => {
+      console.log("WebSocket connected!")
+    }
+
+    ws.onmessage = (e) => {
+      console.log("Message received:", e.data)
+      try {
+        const data = JSON.parse(e.data)
+
+        if (data.type === "heartbeat" && data.drainId === drainId) {
+          setStatus(data.status === "online" ? "online" : "offline")
+        }
+      } catch (err) {
+        console.error("WebSocket parse error:", err)
+      }
+    }
+
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err)
+    }
+
+    ws.onclose = (e) => {
+      console.log("WebSocket closed:", e.code, e.reason)
+    }
+
+    return () => ws.close()
+  }, [drainId])
+
+  return status === "online"
+    ? <Circle className="absolute -top-1 -right-1 size-3.5 fill-green-500 text-green-500" />
+    : <XCircle className="absolute -top-1 -right-1 size-3.5 fill-red-500 text-white" />
 }
 
-export function DrainMarker({ id, name, latitude, longitude, online, onClick }: DrainMarkerProps) {
+type DrainMarkerProps = {
+  id: string
+  name: string
+  latitude: number
+  longitude: number
+  onClick: (drain: { id: string; name: string }) => void
+}
+
+export function DrainMarker({ id, name, latitude, longitude, onClick }: DrainMarkerProps) {
   return (
     <MapMarker longitude={longitude} latitude={latitude} onClick={() => onClick({ id, name })}>
       <MarkerContent>
         <div className="flex flex-col items-center gap-1">
           <div className="relative group flex items-center justify-center w-9 h-9 rounded-full bg-accent border-2 border-text shadow-lg hover:bg-alt-accent hover:border-white transition-colors cursor-pointer">
             <Droplets className="size-4 text-text group-hover:text-white transition-colors" />
-            <span className={`absolute -top-1 -right-1 size-3 rounded-full border-2 border-white ${online ? "bg-green-500" : "bg-red-500"}`} />
+            <DrainStatus drainId={id} />
           </div>
-          <div className="bg-text text-white text-xs font-semibold px-2 py-0.5 rounded-md shadow-md whitespace-nowrap">{name}</div>
+          <div className="bg-text text-white text-xs font-semibold px-2 py-0.5 rounded-md shadow-md whitespace-nowrap">
+            {name}
+          </div>
         </div>
       </MarkerContent>
     </MapMarker>

@@ -3,12 +3,13 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { DynamoDBDocumentClient, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb"
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
 import { Resource } from "sst"
+import { broadcastMessage } from "./WsBroadcast"
 
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 const ses = new SESClient({})
 
-const ALERT_THRESHOLD = 80          // % fill
-const SUSTAINED_MS = 10 * 60 * 1000 // 10 minutes
+const ALERT_THRESHOLD = 80
+const SUSTAINED_MS = 10 * 60 * 1000
 
 export const handler: Handler = async (event) => {
   try {
@@ -38,7 +39,6 @@ export const handler: Handler = async (event) => {
       fillPercent >= 60 ? "elevated" :
       "normal"
 
-    // Track when it first went high — clear it when it drops below threshold
     const alertSince: number | null = isHigh
       ? (drain.alertSince ?? now)
       : null
@@ -59,7 +59,15 @@ export const handler: Handler = async (event) => {
       },
     }))
 
-    // Send alert once when threshold is sustained — reset when it drops
+    await broadcastMessage({
+      type: "sensor-data",
+      drainId,
+      fillPercent,
+      drainStatus,
+      waterLevelCm,
+      timestamp: now,
+    })
+
     if (sustainedAlert && !alreadyAlerted && drain.operatorEmail) {
       await ses.send(new SendEmailCommand({
         Source: Resource.SesFromEmail.value,

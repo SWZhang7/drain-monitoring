@@ -2,6 +2,7 @@ import { Handler } from "aws-lambda"
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb"
 import { Resource } from "sst"
+import { broadcastMessage } from "./WsBroadcast"
 
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 
@@ -12,13 +13,22 @@ export const handler: Handler = async (event) => {
 
     if (!drainId) return jsonResponse(400, { error: "drainId is required" })
 
+    const now = Date.now()
+
     await docClient.send(new UpdateCommand({
       TableName: Resource.Drains.name,
       Key: { D_Id: drainId },
       ConditionExpression: "attribute_exists(D_Id)",
       UpdateExpression: "SET lastSeen = :now",
-      ExpressionAttributeValues: { ":now": Date.now() },
+      ExpressionAttributeValues: { ":now": now },
     }))
+
+    await broadcastMessage({
+      type: "heartbeat",
+      drainId,
+      lastSeen: now,
+      status: "online",
+    })
 
     return jsonResponse(200, { success: true })
   } catch (err) {

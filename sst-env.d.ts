@@ -14,6 +14,11 @@ declare module "sst" {
       "id": string
       "type": "sst.aws.CognitoUserPool"
     }
+    "DrainSocket": {
+      "managementEndpoint": string
+      "type": "sst.aws.ApiGatewayWebSocket"
+      "url": string
+    }
     "Drains": {
       "name": string
       "type": "sst.aws.Dynamo"
@@ -33,6 +38,10 @@ declare module "sst" {
     "SesFromEmail": {
       "type": "sst.sst.Secret"
       "value": string
+    }
+    "WebSocketConnections": {
+      "name": string
+      "type": "sst.aws.Dynamo"
     }
   }
 }

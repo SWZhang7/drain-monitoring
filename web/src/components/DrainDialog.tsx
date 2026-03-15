@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { useState, useEffect } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -10,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 
 const API = import.meta.env.VITE_API_URL ?? ""
+const WS_URL = import.meta.env.VITE_WS_URL ?? ""
 
 const reportSchema = z.object({
   name: z.string().optional(),
@@ -25,7 +27,7 @@ const volunteerSchema = z.object({
 type ReportForm = z.infer<typeof reportSchema>
 type VolunteerForm = z.infer<typeof volunteerSchema>
 
-function ReportForm({ drainId, onClose }: { drainId: string; onClose: () => void }) {
+function ReportForm({ drainId }: { drainId: string }) {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ReportForm>({
     resolver: zodResolver(reportSchema),
   })
@@ -45,7 +47,10 @@ function ReportForm({ drainId, onClose }: { drainId: string; onClose: () => void
   const onSubmit = (data: ReportForm) => {
     toast.promise(mutation.mutateAsync(data), {
       loading: "Submitting your report...",
-      success: () => { reset(); onClose(); return "Report submitted. Your councillor has been notified." },
+      success: () => {
+        reset()
+        return "Report submitted. Your councillor has been notified."
+      },
       error: "Something went wrong. Please try again.",
     })
   }
@@ -53,10 +58,13 @@ function ReportForm({ drainId, onClose }: { drainId: string; onClose: () => void
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 mt-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="r-name">Name <span className="text-xs text-muted-foreground">(Optional)</span></Label>
+        <Label htmlFor="r-name">
+          Name <span className="text-xs text-muted-foreground">(Optional)</span>
+        </Label>
         <Input id="r-name" placeholder="Your name" {...register("name")} />
         {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
       </div>
+
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="r-desc">Description</Label>
         <textarea
@@ -68,6 +76,7 @@ function ReportForm({ drainId, onClose }: { drainId: string; onClose: () => void
         />
         {errors.description && <p className="text-xs text-red-500">{errors.description.message}</p>}
       </div>
+
       <Button
         type="submit"
         disabled={mutation.isPending}
@@ -79,7 +88,7 @@ function ReportForm({ drainId, onClose }: { drainId: string; onClose: () => void
   )
 }
 
-function VolunteerForm({ drainId, onClose }: { drainId: string; onClose: () => void }) {
+function VolunteerForm({ drainId }: { drainId: string }) {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<VolunteerForm>({
     resolver: zodResolver(volunteerSchema),
   })
@@ -99,7 +108,10 @@ function VolunteerForm({ drainId, onClose }: { drainId: string; onClose: () => v
   const onSubmit = (data: VolunteerForm) => {
     toast.promise(mutation.mutateAsync(data), {
       loading: "Signing you up...",
-      success: () => { reset(); onClose(); return "You're all signed up! We've sent your information to your councillor, and they'll be in touch shortly." },
+      success: () => {
+        reset()
+        return "You're all signed up! We've sent your information to your councillor, and they'll be in touch shortly."
+      },
       error: "Something went wrong. Please try again.",
     })
   }
@@ -111,16 +123,21 @@ function VolunteerForm({ drainId, onClose }: { drainId: string; onClose: () => v
         <Input id="v-name" placeholder="Your name" {...register("name")} />
         {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
       </div>
+
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="v-contact">Email</Label>
         <Input id="v-contact" placeholder="you@example.com" {...register("contact")} />
         {errors.contact && <p className="text-xs text-red-500">{errors.contact.message}</p>}
       </div>
+
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="v-avail">Availability <span className="text-xs text-muted-foreground">(Optional)</span></Label>
+        <Label htmlFor="v-avail">
+          Availability <span className="text-xs text-muted-foreground">(Optional)</span>
+        </Label>
         <Input id="v-avail" placeholder="e.g. Weekends, mornings" {...register("availability")} />
         {errors.availability && <p className="text-xs text-red-500">{errors.availability.message}</p>}
       </div>
+
       <Button
         type="submit"
         disabled={mutation.isPending}
@@ -137,40 +154,88 @@ type DrainDialogProps = {
   onClose: () => void
   drainName: string
   drainId?: string
-  online: boolean
 }
 
-function StatusBadge({ online }: { online: boolean }) {
+type DrainStatusValue = "online" | "offline"
+
+function StatusBadge({ drainId }: { drainId: string }) {
+  const [status, setStatus] = useState<DrainStatusValue>("offline")
+
+  useEffect(() => {
+    if (!WS_URL || !drainId) return
+
+    const ws = new WebSocket(WS_URL)
+
+    ws.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data)
+
+        if (data.type === "heartbeat" && data.drainId === drainId) {
+          setStatus(data.status === "online" ? "online" : "offline")
+        }
+      } catch (err) {
+        console.error("WebSocket parse error:", err)
+      }
+    }
+
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err)
+    }
+
+    return () => ws.close()
+  }, [drainId])
+
+  const isOnline = status === "online"
+
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold font-mono tracking-wide ${online ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-      <span className={`size-1.5 rounded-full ${online ? "bg-green-500" : "bg-red-500"}`} />
-      {online ? "Online" : "Offline"}
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold font-mono tracking-wide ${
+        isOnline ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
+      }`}
+    >
+      <span
+        className={`size-1.5 rounded-full ${
+          isOnline ? "bg-green-500" : "bg-red-500"
+        }`}
+      />
+      {isOnline ? "Online" : "Offline"}
     </span>
   )
 }
 
-export function DrainDialog({ open, onClose, drainName, drainId, online }: DrainDialogProps) {
+export function DrainDialog({ open, onClose, drainName, drainId }: DrainDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md pt-10 [&>button]:text-red-500 [&>button]:hover:text-red-700 [&>button]:cursor-pointer">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2.5">
             {drainName}
-            <StatusBadge online={online} />
+            {drainId && <StatusBadge drainId={drainId} />}
           </DialogTitle>
         </DialogHeader>
+
         <Tabs defaultValue="report" className="w-full flex flex-col">
           <TabsList className="w-full!">
-            <TabsTrigger value="report" className="flex-1 cursor-pointer">Update Status</TabsTrigger>
-            <TabsTrigger value="volunteer" className="flex-1 cursor-pointer">Volunteer</TabsTrigger>
+            <TabsTrigger value="report" className="flex-1 cursor-pointer">
+              Update Status
+            </TabsTrigger>
+            <TabsTrigger value="volunteer" className="flex-1 cursor-pointer">
+              Volunteer
+            </TabsTrigger>
           </TabsList>
+
           <TabsContent value="report">
-            <p className="text-sm text-muted-foreground mt-3 mb-1">See a drain? Add information for your local councillor.</p>
-            <ReportForm drainId={drainId ?? ""} onClose={onClose} />
+            <p className="text-sm text-muted-foreground mt-3 mb-1">
+              See a drain? Add information for your local councillor.
+            </p>
+            <ReportForm drainId={drainId ?? ""} />
           </TabsContent>
+
           <TabsContent value="volunteer">
-            <p className="text-sm text-muted-foreground mt-3 mb-1">Want to help fix it? Sign up and we'll connect you with the right person.</p>
-            <VolunteerForm drainId={drainId ?? ""} onClose={onClose} />
+            <p className="text-sm text-muted-foreground mt-3 mb-1">
+              Want to help fix it? Sign up and we'll connect you with the right person.
+            </p>
+            <VolunteerForm drainId={drainId ?? ""} />
           </TabsContent>
         </Tabs>
       </DialogContent>

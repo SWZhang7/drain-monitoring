@@ -1,12 +1,17 @@
 import { drainsTable, drainMessagesTable } from "./storage"
+import { wsConnectionsTable } from "./database"
+import { ws } from "./websocket"
 
 const dbPermissions = [{ actions: ["dynamodb:*"], resources: ["*"] }]
 const comprehendPermissions = [{ actions: ["comprehend:DetectSentiment"], resources: ["*"] }]
 const sesPermissions = [{ actions: ["ses:SendEmail"], resources: ["*"] }]
+const wsManagePermissions = [{ actions: ["execute-api:ManageConnections"], resources: ["*"] }]
 
 export const sesFromEmail = new sst.Secret("SesFromEmail")
 
+// HTTP API
 export const api = new sst.aws.ApiGatewayV2("MyApi", { cors: true })
+
 
 // Drains
 api.route("GET /drains", {
@@ -28,23 +33,29 @@ api.route("POST /reports", {
   permissions: [...dbPermissions, ...comprehendPermissions],
 })
 
-// Volunteers — sends SES email to drain operator
+// Volunteers
 api.route("POST /volunteers", {
   handler: "packages/functions/src/volunteers.create",
   link: [drainsTable, sesFromEmail],
   permissions: [...dbPermissions, ...sesPermissions],
 })
 
-// Sensor data — receives water level readings, computes fill %, alerts operator
+// Sensor data
 api.route("POST /sensor-data", {
   handler: "packages/functions/src/sensorData.handler",
   link: [drainsTable, sesFromEmail],
-  permissions: [...dbPermissions, ...sesPermissions],
+  permissions: [...dbPermissions, ...sesPermissions, ...wsManagePermissions],
+  environment: {
+    WS_ENDPOINT: ws.managementEndpoint,
+  },
 })
 
-// Heartbeat — device pings to update lastSeen
+// Heartbeat
 api.route("POST /heartbeat", {
   handler: "packages/functions/src/heartbeat.handler",
   link: [drainsTable],
-  permissions: dbPermissions,
+  permissions: [...dbPermissions, ...wsManagePermissions],
+  environment: {
+    WS_ENDPOINT: ws.managementEndpoint,
+  },
 })
