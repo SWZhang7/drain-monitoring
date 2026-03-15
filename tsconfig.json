@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "lib": ["ES2020"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext"],
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    "strict": false,
+    "types": ["node"],
     "typeRoots": ["./node_modules/@types", "./infra"]
   },
-  "include": ["infra/**/*", "packages/**/*"]
+  "include": ["infra/**/*", "packages/**/*", "sst.config.ts", "sst-env.d.ts"]
 }

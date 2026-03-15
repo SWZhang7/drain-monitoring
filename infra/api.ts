@@ -1,10 +1,16 @@
 /// <reference path="./sst.d.ts" />
-import { bucket } from "./storage";
+import { bucket, drainsTable, drainMessagesTable } from "./storage";
 import { heartbeatTable, sensorDataTable } from "./database";
 import { userPool } from "./cognito";
 import { sesPermissions } from "./messaging";
 
-const apiPermissions = [
+const dbPermissions = [{ actions: ["dynamodb:*"], resources: ["*"] }];
+const comprehendPermissions = [
+  { actions: ["comprehend:DetectSentiment"], resources: ["*"] },
+];
+
+// Heartbeat and sensor data permissions
+const sensorPermissions = [
   {
     actions: ["dynamodb:*"],
     resources: ["*"],
@@ -14,6 +20,10 @@ const apiPermissions = [
     resources: ["*"],
   },
   ...sesPermissions,
+];
+
+// Cognito admin permissions
+const cognitoPermissions = [
   {
     actions: [
       "cognito-idp:AdminCreateUser",
@@ -28,37 +38,39 @@ const apiPermissions = [
   },
 ];
 
-export const api = new sst.aws.ApiGatewayV2("MyApi", {
-  cors: true,
-});
+export const sesFromEmail = new sst.Secret("SesFromEmail");
 
-export const myFunction = new sst.aws.Function("MyFunction", {
-  handler: "packages/functions/src/api.handler",
-  url: true, // this enables the lambda function URL
-});
+export const api = new sst.aws.ApiGatewayV2("MyApi", { cors: true });
+
+// ============================================
+// HEARTBEAT & SENSOR MONITORING (Gabby's work)
+// ============================================
 
 // Heartbeat endpoint
 api.route("POST /heartbeat", {
   handler: "packages/functions/src/heartbeat.handler",
   link: [heartbeatTable],
-  permissions: apiPermissions,
+  permissions: [...dbPermissions, ...sensorPermissions],
 });
 
 // Sensor data endpoint
 api.route("POST /sensor-data", {
   handler: "packages/functions/src/sensorData.handler",
   link: [sensorDataTable],
-  permissions: apiPermissions,
+  permissions: [...dbPermissions, ...sesPermissions],
   environment: {
     OPERATOR_EMAIL: process.env.OPERATOR_EMAIL || "operator@example.com",
   },
 });
 
-// Admin CRUD endpoints for operators
+// ============================================
+// ADMIN CRUD - OPERATORS (Gabby's work)
+// ============================================
+
 api.route("POST /admin/operators", {
   handler: "packages/functions/src/adminCrud.handler",
   link: [userPool],
-  permissions: apiPermissions,
+  permissions: cognitoPermissions,
   environment: {
     COGNITO_USER_POOL_ID: userPool.id,
   },
@@ -67,7 +79,7 @@ api.route("POST /admin/operators", {
 api.route("GET /admin/operators", {
   handler: "packages/functions/src/adminCrud.handler",
   link: [userPool],
-  permissions: apiPermissions,
+  permissions: cognitoPermissions,
   environment: {
     COGNITO_USER_POOL_ID: userPool.id,
   },
@@ -76,7 +88,7 @@ api.route("GET /admin/operators", {
 api.route("GET /admin/operators/{email}", {
   handler: "packages/functions/src/adminCrud.handler",
   link: [userPool],
-  permissions: apiPermissions,
+  permissions: cognitoPermissions,
   environment: {
     COGNITO_USER_POOL_ID: userPool.id,
   },
@@ -85,7 +97,7 @@ api.route("GET /admin/operators/{email}", {
 api.route("PUT /admin/operators/{email}", {
   handler: "packages/functions/src/adminCrud.handler",
   link: [userPool],
-  permissions: apiPermissions,
+  permissions: cognitoPermissions,
   environment: {
     COGNITO_USER_POOL_ID: userPool.id,
   },
@@ -94,21 +106,63 @@ api.route("PUT /admin/operators/{email}", {
 api.route("DELETE /admin/operators/{email}", {
   handler: "packages/functions/src/adminCrud.handler",
   link: [userPool],
-  permissions: apiPermissions,
+  permissions: cognitoPermissions,
   environment: {
     COGNITO_USER_POOL_ID: userPool.id,
   },
 });
 
-// Existing routes
+// ============================================
+// DRAINS ENDPOINTS (Teammates' work)
+// ============================================
+
+api.route("GET /drains", {
+  handler: "packages/functions/src/drains.list",
+  link: [drainsTable],
+  permissions: dbPermissions,
+});
+
+api.route("GET /drains/{id}", {
+  handler: "packages/functions/src/drains.get",
+  link: [drainsTable],
+  permissions: dbPermissions,
+});
+
+// ============================================
+// REPORTS ENDPOINTS (Teammates' work)
+// ============================================
+
+api.route("POST /reports", {
+  handler: "packages/functions/src/reports.create",
+  link: [drainMessagesTable, drainsTable],
+  permissions: [...dbPermissions, ...comprehendPermissions],
+});
+
+// ============================================
+// VOLUNTEERS ENDPOINTS (Teammates' work)
+// ============================================
+
+api.route("POST /volunteers", {
+  handler: "packages/functions/src/volunteers.create",
+  link: [drainsTable, sesFromEmail],
+  permissions: [
+    { actions: ["dynamodb:GetItem"], resources: ["*"] },
+    { actions: ["ses:SendEmail"], resources: ["*"] },
+  ],
+});
+
+// ============================================
+// EXISTING ROUTES
+// ============================================
+
 api.route("ANY /", {
   handler: "packages/functions/src/api.handler",
   link: [bucket],
-  permissions: apiPermissions,
+  permissions: dbPermissions,
 });
 
 api.route("ANY /{proxy+}", {
   handler: "packages/functions/src/api.handler",
   link: [bucket],
-  permissions: apiPermissions,
+  permissions: dbPermissions,
 });

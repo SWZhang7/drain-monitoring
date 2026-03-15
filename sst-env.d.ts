@@ -10,6 +10,14 @@ declare module "sst" {
       "id": string
       "type": "sst.aws.CognitoUserPool"
     }
+    "DrainMessages": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "Drains": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
     "MyApi": {
       "type": "sst.aws.ApiGatewayV2"
       "url": string
@@ -30,6 +38,10 @@ declare module "sst" {
     "SensorHeartbeat": {
       "name": string
       "type": "sst.aws.Dynamo"
+    }
+    "SesFromEmail": {
+      "type": "sst.sst.Secret"
+      "value": string
     }
   }
 }
