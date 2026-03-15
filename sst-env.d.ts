@@ -6,13 +6,13 @@
 
 declare module "sst" {
   export interface Resource {
-    "DrainMonitoringPool": {
-      "id": string
-      "type": "sst.aws.CognitoUserPool"
-    }
     "DrainMessages": {
       "name": string
       "type": "sst.aws.Dynamo"
+    }
+    "DrainMonitoringPool": {
+      "id": string
+      "type": "sst.aws.CognitoUserPool"
     }
     "Drains": {
       "name": string
@@ -20,15 +20,6 @@ declare module "sst" {
     }
     "MyApi": {
       "type": "sst.aws.ApiGatewayV2"
-      "url": string
-    }
-    "MyBucket": {
-      "name": string
-      "type": "sst.aws.Bucket"
-    }
-    "MyFunction": {
-      "name": string
-      "type": "sst.aws.Function"
       "url": string
     }
     "SensorData": {

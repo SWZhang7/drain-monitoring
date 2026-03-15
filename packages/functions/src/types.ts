@@ -1,8 +1,14 @@
+export type DrainStatus = "normal" | "elevated" | "critical"
+
 export type DrainPublic = {
   D_Id: string
   publicName: string
   latitude: number
   longitude: number
+  height: number | null
+  online: boolean
+  fillPercent: number | null
+  drainStatus: DrainStatus
 }
 
 export type DrainItem = DrainPublic & {
@@ -10,6 +16,8 @@ export type DrainItem = DrainPublic & {
   sentimentScore: number
   reportCount: number
   operatorEmail: string
+  lastSeen: number | null  // epoch ms
+  height: number | null    // cm
 }
 
 export type DrainEventItem = {

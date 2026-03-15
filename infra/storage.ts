@@ -1,16 +1,12 @@
 export const drainsTable = new sst.aws.Dynamo("Drains", {
-  fields: {
-    D_Id: "string",
-  },
+  fields: { D_Id: "string" },
   primaryIndex: { hashKey: "D_Id" },
-});
+})
 
-// Schema: D_Id (PK), publicName, privateName, latitude, longitude, sentimentScore (0-10)
+// Schema: D_Id (PK), publicName, privateName, latitude, longitude, height (cm),
+//         sentimentScore, lastSeen, currentFillPercent, alertSince, alreadyAlerted
 
 export const drainMessagesTable = new sst.aws.Dynamo("DrainMessages", {
-  fields: {
-    D_Id: "string",
-    Event_Key: "string",
-  },
+  fields: { D_Id: "string", Event_Key: "string" },
   primaryIndex: { hashKey: "D_Id", rangeKey: "Event_Key" },
-});
+})

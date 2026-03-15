@@ -1,7 +1,6 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useState, useEffect } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -26,7 +25,7 @@ const volunteerSchema = z.object({
 type ReportForm = z.infer<typeof reportSchema>
 type VolunteerForm = z.infer<typeof volunteerSchema>
 
-function ReportForm({ drainId }: { drainId: string }) {
+function ReportForm({ drainId, onClose }: { drainId: string; onClose: () => void }) {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ReportForm>({
     resolver: zodResolver(reportSchema),
   })
@@ -46,7 +45,7 @@ function ReportForm({ drainId }: { drainId: string }) {
   const onSubmit = (data: ReportForm) => {
     toast.promise(mutation.mutateAsync(data), {
       loading: "Submitting your report...",
-      success: () => { reset(); return "Report submitted. Your councillor has been notified." },
+      success: () => { reset(); onClose(); return "Report submitted. Your councillor has been notified." },
       error: "Something went wrong. Please try again.",
     })
   }
@@ -80,7 +79,7 @@ function ReportForm({ drainId }: { drainId: string }) {
   )
 }
 
-function VolunteerForm({ drainId }: { drainId: string }) {
+function VolunteerForm({ drainId, onClose }: { drainId: string; onClose: () => void }) {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<VolunteerForm>({
     resolver: zodResolver(volunteerSchema),
   })
@@ -100,7 +99,7 @@ function VolunteerForm({ drainId }: { drainId: string }) {
   const onSubmit = (data: VolunteerForm) => {
     toast.promise(mutation.mutateAsync(data), {
       loading: "Signing you up...",
-      success: () => { reset(); return "You're all signed up! We've sent your information to your councillor, and they'll be in touch shortly." },
+      success: () => { reset(); onClose(); return "You're all signed up! We've sent your information to your councillor, and they'll be in touch shortly." },
       error: "Something went wrong. Please try again.",
     })
   }
@@ -138,36 +137,26 @@ type DrainDialogProps = {
   onClose: () => void
   drainName: string
   drainId?: string
+  online: boolean
 }
 
-type DrainStatusValue = "online" | "offline"
-
-function StatusBadge({ drainId }: { drainId: string }) {
-  const [status, setStatus] = useState<DrainStatusValue>("offline")
-
-  useEffect(() => {
-    const ws = new WebSocket(`wss://your-api/drains/${drainId}/status`)
-    ws.onmessage = (e) => setStatus(JSON.parse(e.data).status)
-    return () => ws.close()
-  }, [drainId])
-
-  const isOnline = status === "online"
+function StatusBadge({ online }: { online: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold font-mono tracking-wide ${isOnline ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-      <span className={`size-1.5 rounded-full ${isOnline ? "bg-green-500" : "bg-red-500"}`} />
-      {isOnline ? "Online" : "Offline"}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold font-mono tracking-wide ${online ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+      <span className={`size-1.5 rounded-full ${online ? "bg-green-500" : "bg-red-500"}`} />
+      {online ? "Online" : "Offline"}
     </span>
   )
 }
 
-export function DrainDialog({ open, onClose, drainName, drainId }: DrainDialogProps) {
+export function DrainDialog({ open, onClose, drainName, drainId, online }: DrainDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md pt-10 [&>button]:text-red-500 [&>button]:hover:text-red-700 [&>button]:cursor-pointer">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2.5">
             {drainName}
-            {drainId && <StatusBadge drainId={drainId} />}
+            <StatusBadge online={online} />
           </DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="report" className="w-full flex flex-col">
@@ -177,11 +166,11 @@ export function DrainDialog({ open, onClose, drainName, drainId }: DrainDialogPr
           </TabsList>
           <TabsContent value="report">
             <p className="text-sm text-muted-foreground mt-3 mb-1">See a drain? Add information for your local councillor.</p>
-            <ReportForm drainId={drainId ?? ""} />
+            <ReportForm drainId={drainId ?? ""} onClose={onClose} />
           </TabsContent>
           <TabsContent value="volunteer">
             <p className="text-sm text-muted-foreground mt-3 mb-1">Want to help fix it? Sign up and we'll connect you with the right person.</p>
-            <VolunteerForm drainId={drainId ?? ""} />
+            <VolunteerForm drainId={drainId ?? ""} onClose={onClose} />
           </TabsContent>
         </Tabs>
       </DialogContent>

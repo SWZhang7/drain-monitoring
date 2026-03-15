@@ -33,9 +33,11 @@ function MapLoader() {
   )
 }
 
+type SelectedDrain = { name: string; id: string; online: boolean }
+
 function DrainMap() {
   const [theme, setTheme] = useState<"light" | "dark">("dark")
-  const [selectedDrain, setSelectedDrain] = useState<{ name: string; id: string } | null>(null)
+  const [selectedDrain, setSelectedDrain] = useState<SelectedDrain | null>(null)
 
   const { data: drains = [] } = useQuery({
     queryKey: ["drains"],
@@ -70,7 +72,8 @@ function DrainMap() {
               name={drain.publicName}
               latitude={drain.latitude}
               longitude={drain.longitude}
-              onClick={setSelectedDrain}
+              online={drain.online}
+              onClick={(d) => setSelectedDrain({ ...d, online: drain.online })}
             />
           ))}
           <MapControls showCompass />
@@ -81,6 +84,7 @@ function DrainMap() {
         onClose={() => setSelectedDrain(null)}
         drainName={selectedDrain?.name ?? ""}
         drainId={selectedDrain?.id}
+        online={selectedDrain?.online ?? false}
       />
     </div>
   )

@@ -8,8 +8,14 @@ const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 export const list: Handler = async () => {
   try {
     const result = await docClient.send(new ScanCommand({ TableName: Resource.Drains.name }))
-    const items = (result.Items || []).map(({ D_Id, publicName, latitude, longitude }) => ({
-      D_Id, publicName, latitude, longitude,
+    const ONLINE_THRESHOLD_MS = 5 * 60 * 1000 // 5 minutes
+    const now = Date.now()
+    const items = (result.Items || []).map(({ D_Id, publicName, latitude, longitude, lastSeen, height, fillPercent, drainStatus }) => ({
+      D_Id, publicName, latitude, longitude, height,
+      lastSeen,
+      online: lastSeen != null && (now - lastSeen) < ONLINE_THRESHOLD_MS,
+      fillPercent: fillPercent ?? null,
+      drainStatus: (drainStatus ?? "normal") as "normal" | "elevated" | "critical",
     }))
     return jsonResponse(200, items)
   } catch (err) {
